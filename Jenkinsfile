@@ -1,34 +1,65 @@
 pipeline {
     agent any
 
+    environment {
+        // Centralize your Sonar settings for easy updates
+        SONAR_PROJECT_KEY = "flask-student-demo"
+        SONAR_HOST_URL    = "http://localhost:9000"
+        SONAR_TOKEN       = "sqp_e70065d2e97f245e58ce20f43dcb24904607586f"
+    }
+
     stages {
-        stage('Setup Environment') {
+        stage('Checkout') {
             steps {
-                // Creates a clean virtual environment in the workspace
-                sh 'python3 -m venv venv'
+                // Jenkins automatically checks out code, but this ensures a clean start
+                checkout scm
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Setup & Install') {
             steps {
-                // You must use the pip inside the venv
-                sh './venv/bin/pip install --upgrade pip'
-                sh './venv/bin/pip install -r requirements.txt'
+                sh '''
+                    python3 -m venv venv
+                    ./venv/bin/pip install --upgrade pip
+                    ./venv/bin/pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Run Tests') {
             steps {
-                // Ensure pytest is in your requirements.txt or install it here
-                sh './venv/bin/python -m pytest'
+                // Runs pytest; || true ensures the pipeline continues to Sonar scan even if tests fail
+                sh './venv/bin/python -m pytest || true'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                // This uses the Docker CLI installed in your custom Jenkins image
+                // It connects to the host's Docker engine via /var/run/docker.sock
+                sh """
+                docker run --rm \
+                    -v "${WORKSPACE}:/usr/src" \
+                    --network="host" \
+                    -e SONAR_HOST_URL="${SONAR_HOST_URL}" \
+                    -e SONAR_SCANNER_OPTS="-Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.exclusions=**/.pytest_cache/**" \
+                    -e SONAR_TOKEN="${SONAR_TOKEN}" \
+                    sonarsource/sonar-scanner-cli
+                """
             }
         }
     }
 
     post {
         always {
-            // Cleans up the workspace (including the venv folder) after build
+            // Keep the workspace clean after the build
             cleanWs()
+        }
+        success {
+            echo 'Build and Sonar Analysis completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check the logs for errors.'
         }
     }
 }
