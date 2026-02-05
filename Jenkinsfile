@@ -4,22 +4,22 @@ pipeline {
     stages {
         stage('Setup Environment') {
             steps {
-                // Install python3-venv if pip is missing
+                // Creates a clean virtual environment in the workspace
                 sh 'python3 -m venv venv'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                // Use the pip inside the virtual environment
+                // You must use the pip inside the venv
                 sh './venv/bin/pip install --upgrade pip'
                 sh './venv/bin/pip install -r requirements.txt'
             }
         }
 
-        stage('Run Tests & Coverage') {
+        stage('Run Tests') {
             steps {
-                // Run tests using the venv python
+                // Ensure pytest is in your requirements.txt or install it here
                 sh './venv/bin/python -m pytest'
             }
         }
@@ -27,6 +27,7 @@ pipeline {
 
     post {
         always {
+            // Cleans up the workspace (including the venv folder) after build
             cleanWs()
         }
     }
