@@ -12,14 +12,14 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 // Use 'bat' for Windows Command Prompt
-                bat 'pip install -r requirements.txt'
+                sh 'pip install -r requirements.txt'
             }
         }
 
       stage('Run Tests & Coverage') {
         steps {
             // Using 'python -m' solves most ModuleNotFound issues
-            bat 'python -m pytest --cov=app --cov-report=xml tests/'
+            sh 'python -m pytest --cov=app --cov-report=xml tests/'
         }
     }
 
