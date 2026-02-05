@@ -1,33 +1,29 @@
 pipeline {
-    agent any
+    agent {
+        // This runs your steps inside a Python container
+        docker { 
+            image 'python:3.9-slim' 
+        }
+    }
 
     stages {
-        stage('Checkout') {
-            steps {
-                // Pull code from your repository
-                checkout scm
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
-                // Use 'bat' for Windows Command Prompt
+                sh 'pip install --upgrade pip'
                 sh 'pip install -r requirements.txt'
             }
         }
 
-      stage('Run Tests & Coverage') {
-        steps {
-            // Using 'python -m' solves most ModuleNotFound issues
-            sh 'python -m pytest --cov=app --cov-report=xml tests/'
+        stage('Run Tests & Coverage') {
+            steps {
+                // Adjust this to your actual test command (e.g., pytest)
+                sh 'python -m pytest'
+            }
         }
-    }
-
     }
 
     post {
         always {
-            // Clean up the workspace after completion
             cleanWs()
         }
     }
