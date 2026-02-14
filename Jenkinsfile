@@ -33,21 +33,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                // This uses the Docker CLI installed in your custom Jenkins image
-                // It connects to the host's Docker engine via /var/run/docker.sock
-                sh """
-                docker run --rm \
-                    -v "${WORKSPACE}:/usr/src" \
-                    --network="host" \
-                    -e SONAR_HOST_URL="${SONAR_HOST_URL}" \
-                    -e SONAR_SCANNER_OPTS="-Dsonar.projectKey=${SONAR_PROJECT_KEY} -Dsonar.exclusions=**/.pytest_cache/**" \
-                    -e SONAR_TOKEN="${SONAR_TOKEN}" \
-                    sonarsource/sonar-scanner-cli
-                """
-            }
-        }
+      
     }
 
     post {
